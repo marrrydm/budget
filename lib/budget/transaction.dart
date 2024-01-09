@@ -3,13 +3,15 @@ import 'package:flutter/material.dart';
 class Transaction {
   final String title;
   final int amount;
+  final bool isPlus;
 
-  Transaction(this.title, this.amount);
+  Transaction(this.title, this.amount, this.isPlus);
 
   Map<String, dynamic> toJson() {
     return {
       'title': title,
       'amount': amount,
+      'isPlus': isPlus,
     };
   }
 
@@ -17,6 +19,7 @@ class Transaction {
     return Transaction(
       json['title'] as String,
       json['amount'] as int,
+      json['isPlus'] as bool,
     );
   }
 }
@@ -25,11 +28,13 @@ class TransactionWidget extends StatelessWidget {
   final String icon;
   final String title;
   final String amount;
+  final bool isPlus;
 
   TransactionWidget({
     required this.icon,
     required this.title,
     required this.amount,
+    required this.isPlus,
   });
 
   @override
@@ -77,9 +82,7 @@ class TransactionWidget extends StatelessWidget {
             left: 279,
             top: 6,
             child: Text(
-              int.parse(amount) >= 0
-                  ? '+$amount'
-                  : '-${(-int.parse(amount)).toString()}',
+              isPlus == true ? '+$amount' : '${(-int.parse(amount)).toString()}',
               textAlign: TextAlign.right,
               style: TextStyle(
                   color: Colors.black,

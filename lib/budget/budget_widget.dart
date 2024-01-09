@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_task/budget/budget_cache.dart';
 import 'package:flutter_task/budget/transaction.dart';
-import 'dart:math';
 
 class BudgetSummaryWidget extends StatefulWidget {
   @override
@@ -18,20 +17,65 @@ class _BudgetSummaryWidgetState extends State<BudgetSummaryWidget> {
 
   BudgetCache _budgetCache = BudgetCache();
 
-  ShapeDecoration spendingDecoration = ShapeDecoration(
-    color: Colors.black,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(25),
-    ),
-  );
+  Future<void> _showTransactionInputDialog(String title, bool isPlus) async {
+    String transactionTitle = '';
+    double transactionAmount = 0.0;
 
-  ShapeDecoration incomesDecoration = ShapeDecoration(
-    color: Colors.black,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(25),
-    ),
-  );
+  await showDialog(
+    context: context,
+    builder: (context) {
+      return SingleChildScrollView(
+        child: AlertDialog(
+          title: Text('Add $title'),
+          content: Column(
+            children: [
+              TextField(
+                decoration: InputDecoration(labelText: 'Title'),
+                onChanged: (value) {
+                  transactionTitle = value;
+                },
+              ),
+              TextField(
+                decoration: InputDecoration(labelText: 'Amount'),
+                keyboardType: TextInputType.number,
+                onChanged: (value) {
+                  transactionAmount = double.tryParse(value) ?? 0.0;
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                if (transactionTitle.isNotEmpty && transactionAmount != 0) {
+                  handleTransaction(
+                      transactionTitle, transactionAmount.toInt(), isPlus);
+                  _updateButtonState(title, transactionAmount.toInt());
 
+                  setState(() {
+                    if (title == 'Spending') {
+                      spending += isPlus ? -transactionAmount : transactionAmount;
+                    } else if (title == 'Incomes') {
+                      incomes += isPlus ? transactionAmount : -transactionAmount;
+                    }
+                  });
+                }
+                Navigator.pop(context);
+              },
+              child: Text('Add'),
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
 
   @override
   void initState() {
@@ -59,27 +103,29 @@ class _BudgetSummaryWidgetState extends State<BudgetSummaryWidget> {
     super.dispose();
   }
 
-  @override
+@override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/bg.jpg'),
-            fit: BoxFit.cover,
+      body: SingleChildScrollView(
+        child: Container(
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage('assets/bg.jpg'),
+              fit: BoxFit.cover,
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                _buildBudgetContainer(),
-                SizedBox(height: 15),
-                _buildSpendingIncomesContainer(),
-                SizedBox(height: 15),
-                _buildTransactionList(),
-              ],
+          child: SafeArea(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  _buildBudgetContainer(),
+                  SizedBox(height: 15),
+                  _buildSpendingIncomesContainer(),
+                  SizedBox(height: 15),
+                  _buildTransactionList(),
+                ],
+              ),
             ),
           ),
         ),
@@ -213,7 +259,7 @@ class _BudgetSummaryWidgetState extends State<BudgetSummaryWidget> {
                       left: 0,
                       top: 28,
                       child: Text(
-                        '\$ ${spending.toInt()}',
+                        '\$ -${spending.toInt()}',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 20,
@@ -321,8 +367,9 @@ class _BudgetSummaryWidgetState extends State<BudgetSummaryWidget> {
                 itemBuilder: (context, index) {
                   return TransactionWidget(
                     icon: 'assets/trans.png',
-                    title: 'Financial operations',
+                    title: transactions[index].title,
                     amount: transactions[index].amount.toString(),
+                    isPlus: transactions[index].isPlus,
                   );
                 },
               ),
@@ -333,20 +380,20 @@ class _BudgetSummaryWidgetState extends State<BudgetSummaryWidget> {
     );
   }
 
-  void handleTransaction(String title, int amount) {
+  void handleTransaction(String title, int amount, bool isPlus) {
     setState(() {
-      transactions.add(Transaction(title, amount));
-      budget += amount;
+      transactions.add(Transaction(title, amount, isPlus));
+      budget += isPlus ? amount : -amount;
 
       if (title == 'Spending') {
-        spending += amount;
+        spending += isPlus ? -amount : amount;
       } else if (title == 'Incomes') {
-        incomes += amount;
+        incomes += isPlus ? amount : -amount;
       }
     });
   }
 
-  void _updateButtonState(String title, double amount) {
+  void _updateButtonState(String title, int amount) {
     setState(() {
       if (title == 'Spending') {
         spendingClicked = !spendingClicked;
@@ -359,16 +406,10 @@ class _BudgetSummaryWidgetState extends State<BudgetSummaryWidget> {
   }
 
   void _toggleSpending() {
-    final randomAmount = Random().nextInt(2000) + 1;
-    final title = 'Spending';
-    handleTransaction(title, -randomAmount.toInt());
-    _updateButtonState(title, -randomAmount.toDouble());
+    _showTransactionInputDialog('Spending', false);
   }
 
   void _toggleIncomes() {
-    final randomAmount = Random().nextInt(2000) + 1;
-    final title = 'Incomes';
-    handleTransaction(title, randomAmount.toInt());
-    _updateButtonState(title, randomAmount.toDouble());
+    _showTransactionInputDialog('Incomes', true);
   }
 }
