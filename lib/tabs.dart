@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_task/home/home.dart';
+import 'package:flutter_task/budget/budget_screen.dart';
 import 'package:flutter_task/onb/photo_screen.dart';
 import 'package:flutter_task/settings/settings_screen.dart';
-import 'budget/budget_screen.dart';
+
 
 class MyTabs extends StatefulWidget {
   @override
@@ -12,7 +13,7 @@ class MyTabs extends StatefulWidget {
 class _MyTabsState extends State<MyTabs> {
   int _currentIndex = 0;
 
-  final List<String> _tabTitles = ['Home', 'Budget', 'Onboard', 'Settings'];
+  final List<String> _tabTitles = ['Home', 'Budget', 'Advices', 'Settings'];
   final List<String> _tabImages = [
     'assets/tab1.png',
     'assets/tab2.png',

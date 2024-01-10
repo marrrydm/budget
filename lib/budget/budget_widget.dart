@@ -21,56 +21,60 @@ class _BudgetSummaryWidgetState extends State<BudgetSummaryWidget> {
     String transactionTitle = '';
     double transactionAmount = 0.0;
 
-  await showDialog(
+    await showDialog(
     context: context,
     builder: (context) {
-      return SingleChildScrollView(
-        child: AlertDialog(
-          title: Text('Add $title'),
-          content: Column(
-            children: [
-              TextField(
-                decoration: InputDecoration(labelText: 'Title'),
-                onChanged: (value) {
-                  transactionTitle = value;
+      return Center(
+        child: SingleChildScrollView(
+          child: AlertDialog(
+            title: Text('Add $title'),
+            content: Column(
+              children: [
+                TextField(
+                  decoration: InputDecoration(labelText: 'Title'),
+                  onChanged: (value) {
+                    transactionTitle = value;
+                  },
+                ),
+                TextField(
+                  decoration: InputDecoration(labelText: 'Amount'),
+                  keyboardType: TextInputType.number,
+                  onChanged: (value) {
+                    transactionAmount = double.tryParse(value) ?? 0.0;
+                  },
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
                 },
+                child: Text('Cancel'),
               ),
-              TextField(
-                decoration: InputDecoration(labelText: 'Amount'),
-                keyboardType: TextInputType.number,
-                onChanged: (value) {
-                  transactionAmount = double.tryParse(value) ?? 0.0;
+              TextButton(
+                onPressed: () {
+                  if (transactionTitle.isNotEmpty && transactionAmount != 0) {
+                    handleTransaction(
+                        transactionTitle, transactionAmount.toInt(), isPlus);
+                    _updateButtonState(title, transactionAmount.toInt());
+
+                    setState(() {
+                      if (title == 'Spending') {
+                        spending +=
+                            isPlus ? -transactionAmount : transactionAmount;
+                      } else if (title == 'Incomes') {
+                        incomes +=
+                            isPlus ? transactionAmount : -transactionAmount;
+                      }
+                    });
+                  }
+                  Navigator.pop(context);
                 },
+                child: Text('Add'),
               ),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                if (transactionTitle.isNotEmpty && transactionAmount != 0) {
-                  handleTransaction(
-                      transactionTitle, transactionAmount.toInt(), isPlus);
-                  _updateButtonState(title, transactionAmount.toInt());
-
-                  setState(() {
-                    if (title == 'Spending') {
-                      spending += isPlus ? -transactionAmount : transactionAmount;
-                    } else if (title == 'Incomes') {
-                      incomes += isPlus ? transactionAmount : -transactionAmount;
-                    }
-                  });
-                }
-                Navigator.pop(context);
-              },
-              child: Text('Add'),
-            ),
-          ],
         ),
       );
     },

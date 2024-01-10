@@ -22,14 +22,22 @@ environment:
 
 dependencies:
   provider: ^6.1.1
+  path_provider: ^2.0.14
+  image_picker: ^0.8.0+2
+  flutter_image_compress: ^2.1.0
+  image: ^3.0.1
+  path: ^1.8.0
+  in_app_webview: any
+  collection: ^1.15.0
   flutter:
     sdk: flutter
+  flutter_inappwebview: any
 
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.2
-  shared_preferences: ^2.0.7
+  # shared_preferences: ^2.0.7
 
 dev_dependencies:
   shared_preferences: ^2.0.12
@@ -66,6 +74,13 @@ flutter:
     - assets/img1.png
     - assets/img2.png
     - assets/img3.png
+    - assets/img4.png
+    - assets/img5.png
+    - assets/img6.png
+    - assets/img7.png
+    - assets/img8.png
+    - assets/img9.png
+    - assets/img10.png
     - assets/back.png
     
   # An image asset can refer to one or more resolution-specific "variants", see

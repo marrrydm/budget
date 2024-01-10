@@ -8,101 +8,82 @@ class SecondScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage('assets/bg.jpg'),
-          fit: BoxFit.cover,
+    return Scaffold(
+      body: Container(
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/bg.jpg'),
+            fit: BoxFit.cover,
+          ),
         ),
-      ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          double screenWidth = constraints.maxWidth;
-          double screenHeight = constraints.maxHeight;
-
-          return Stack(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(16.0, MediaQuery.of(context).padding.top + 5, 16.0, 16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Positioned(
-                left: screenWidth * 0.04,
-                top: screenHeight * 0.13,
-                child: SizedBox(
-                  width: screenWidth * 0.92,
-                  child: Text(
-                    title,
-                    textAlign: TextAlign.left,
-                    style: TextStyle(
-                      decoration: TextDecoration.none,
-                      color: Colors.black,
-                      fontSize: 32,
-                      fontFamily: 'SrbijaSans',
-                      fontWeight: FontWeight.w400,
+              GestureDetector(
+                onTap: () {
+                  Navigator.pop(context);
+                },
+                child: Row(
+                  children: [
+                    Container(
+                      width: 24,
+                      height: 24,
+                      clipBehavior: Clip.antiAlias,
+                      decoration: BoxDecoration(
+                        image: DecorationImage(
+                          image: AssetImage('assets/back.png'),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 7),
+                    Text(
+                      'Back',
+                      style: TextStyle(
+                        decoration: TextDecoration.none,
+                        color: Colors.black,
+                        fontSize: 16,
+                        fontFamily: 'SrbijaSans',
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 10),
+              Text(
+                title,
+                style: TextStyle(
+                  decoration: TextDecoration.none,
+                  color: Colors.black,
+                  fontSize: 32,
+                  fontFamily: 'SrbijaSans',
+                  fontWeight: FontWeight.w400,
+                  letterSpacing: -0.30,
                 ),
               ),
               SizedBox(height: 15),
-              Positioned(
-                left: screenWidth * 0.04,
-                right: screenWidth * 0.04,
-                top: screenHeight * 0.19,
-                child: SizedBox(
+              Expanded(
+                child: SingleChildScrollView(
                   child: Text(
                     description,
-                    textAlign: TextAlign.left,
                     style: TextStyle(
                       decoration: TextDecoration.none,
                       color: Colors.black,
                       fontSize: 20,
                       fontFamily: 'SrbijaSans',
                       fontWeight: FontWeight.w400,
+                      letterSpacing: -0.30,
                     ),
                   ),
                 ),
               ),
-              Positioned(
-                left: screenWidth * 0.04,
-                top: screenHeight * 0.07,
-                child: Container(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 24,
-                        height: 24,
-                        clipBehavior: Clip.antiAlias,
-                        decoration: BoxDecoration(
-                          image: DecorationImage(
-                            image: AssetImage('assets/back.png'),
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 7),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.pop(context);
-                        },
-                        child: Text(
-                          'Back',
-                          style: TextStyle(
-                            decoration: TextDecoration.none,
-                            color: Colors.black,
-                            fontSize: 16,
-                            fontFamily: 'SrbijaSans',
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
             ],
-          );
-        },
+          ),
+        ),
       ),
     );
   }

@@ -15,8 +15,8 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (context) => PhotoInfoProvider()),
       ],
       child: MaterialApp(
-      home: MyTabs(),
-    ),
+        home: MyTabs(),
+      ),
     );
   }
 }

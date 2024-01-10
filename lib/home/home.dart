@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_task/home/user_photo_cache.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -86,7 +89,7 @@ class HomeScreenBody extends StatelessWidget {
     required this.onDatePick,
   });
 
-@override
+  @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
@@ -125,53 +128,160 @@ class UserInfoWidget extends StatelessWidget {
       padding: const EdgeInsets.only(top: 15),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          Container(
-            width: 51,
-            height: 51,
-            margin: EdgeInsets.only(left: 15),
-            child: Image.asset('assets/per2.png'),
-          ),
-          SizedBox(width: 20),
-          UserInfoDetailsWidget(),
-        ],
+        children: [UserInfoDetailsWidget()],
       ),
     );
   }
 }
 
-class UserInfoDetailsWidget extends StatelessWidget {
+class UserInfoDetailsWidget extends StatefulWidget {
+  @override
+  _UserInfoDetailsWidgetState createState() => _UserInfoDetailsWidgetState();
+}
+
+class _UserInfoDetailsWidgetState extends State<UserInfoDetailsWidget> {
+  final UserPhotoCache _photoCache = UserPhotoCache();
+  File? _userPhoto;
+  String? _userName;
+
+  @override
+  void initState() {
+     _loadUserData();
+    super.initState();
+  }
+
+Future<void> _saveChanges() async {
+  try {
+    final userPhotoToSave = _userPhoto ?? File('assets/per2.png');
+    await _photoCache.saveUserPhoto(userPhotoToSave);
+
+    print('User photo saved successfully');
+
+    setState(() {
+      _userPhoto = userPhotoToSave;
+    });
+  } catch (e) {
+    print('Error saving user photo: $e');
+  }
+}
+
+Future<void> _loadUserData() async {
+  try {
+    final loadedPhoto = await _photoCache.loadUserPhoto();
+    final loadedName = await UserNameCache.loadUserName();
+
+    if (mounted) {
+      setState(() {
+        _userPhoto = loadedPhoto;
+        _userName = loadedName;
+      });
+    }
+    print('User data loaded successfully');
+  } catch (e) {
+    print('Error loading user data: $e');
+  }
+}
+
+
+  Future<void> _pickUserPhoto(ImageSource source) async {
+    try {
+      print('Picking user photo...');
+      final pickedFile = await ImagePicker().pickImage(source: source);
+      if (pickedFile != null) {
+        final pickedImage = File(pickedFile.path);
+
+        await _photoCache.saveUserPhoto(pickedImage);
+        setState(() {
+          _userPhoto = pickedImage;
+        });
+
+        // Сохраните изменения в кеше
+        _saveChanges();
+        print('User photo picked successfully');
+      }
+    } catch (e) {
+      print('Error picking image: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.start,
+    return Row(
       children: [
-        SizedBox(
-          child: Text(
-            'Hi, Ulyana!',
-            style: TextStyle(
-              color: Colors.black,
-              fontSize: 24,
-              fontFamily: 'SrbijaSans',
-              fontWeight: FontWeight.w400,
+        Container(
+          margin: EdgeInsets.only(left: 15),
+          child: GestureDetector(
+            onTap: () => _showImagePickerDialog(context),
+            child: CircleAvatar(
+              radius: 25,
+              backgroundImage:
+                  _userPhoto != null ? FileImage(_userPhoto!) : null,
+              child: _userPhoto == null ? Icon(Icons.camera_alt) : null,
             ),
           ),
         ),
-        SizedBox(height: 7),
-        SizedBox(
-          child: Text(
-            'hjkdjbdhdhjsk@gmail.com',
-            style: TextStyle(
-              color: Colors.black.withOpacity(0.7),
-              fontSize: 16,
-              fontFamily: 'SrbijaSans',
-              fontWeight: FontWeight.w400,
+        SizedBox(width: 20),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            SizedBox(
+              child: Text(
+                'Hi, ${_userName?.isNotEmpty == true ? _userName! : 'Name'}!',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontSize: 24,
+                  fontFamily: 'SrbijaSans',
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
             ),
-          ),
+            SizedBox(height: 7),
+            SizedBox(
+              child: Text(
+                'hjkdjbdhdhjsk@gmail.com',
+                style: TextStyle(
+                  color: Colors.black.withOpacity(0.7),
+                  fontSize: 16,
+                  fontFamily: 'SrbijaSans',
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ),
+          ],
         ),
       ],
+    );
+  }
+
+  Future<void> _showImagePickerDialog(BuildContext context) async {
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Choose'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: Text('Gallery'),
+                onTap: () {
+                  _pickUserPhoto(ImageSource.gallery);
+                  Navigator.of(context).pop();
+                },
+              ),
+              ListTile(
+                title: Text('Camera'),
+                onTap: () {
+                  _pickUserPhoto(ImageSource.camera);
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -387,17 +497,16 @@ class DateRangePickerField extends StatelessWidget {
             ),
           ),
           Container(
-            width: 50,
-            height: 50,
-            clipBehavior: Clip.antiAlias,
-            decoration: ShapeDecoration(
-              color: Colors.black,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(50),
+              width: 50,
+              height: 50,
+              clipBehavior: Clip.antiAlias,
+              decoration: ShapeDecoration(
+                color: Colors.black,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(50),
+                ),
               ),
-            ),
-              child: Image.asset('assets/botton.png')
-          ),
+              child: Image.asset('assets/botton.png')),
         ],
       ),
     );
