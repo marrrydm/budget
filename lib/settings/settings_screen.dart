@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'dart:io';
 import 'package:flutter_task/home/user_photo_cache.dart';
 import 'package:image_picker/image_picker.dart';
-// import 'package:in_app_webview/in_app_webview.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
 class SettingsScreen extends StatefulWidget {
   @override
@@ -12,7 +11,6 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   File? _userPhoto;
-  String? _userName;
   TextEditingController _nameController = TextEditingController();
   final UserPhotoCache _photoCache = UserPhotoCache();
 
@@ -36,16 +34,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() {
       _userPhoto = loadedPhoto;
       _nameController.text = loadedName;
-      _userName = loadedName;
     });
   }
 
   Future<void> _saveChanges() async {
-    final userPhotoToSave = _userPhoto ?? File('assets/per2.png');
-    await _photoCache.saveUserPhoto(userPhotoToSave);
-
     final userNameToSave = _nameController.text;
     await _photoCache.saveUserName(userNameToSave);
+
+    final userPhotoToSave = _userPhoto ?? File('assets/per2.png');
+    await _photoCache.saveUserPhoto(userPhotoToSave);
   }
 
   Future<void> _pickUserPhoto(ImageSource source) async {
@@ -54,29 +51,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (pickedFile != null) {
         final pickedImage = File(pickedFile.path);
 
-        await _photoCache.saveUserPhoto(pickedImage);
-
         setState(() {
           _userPhoto = pickedImage;
         });
+
+        await Future.delayed(Duration(milliseconds: 500));
+
+        await _photoCache.saveUserPhoto(pickedImage);
+        _saveChanges();
       }
     } catch (e) {
       print('Error picking image: $e');
-    }
-  }
-
-  Future<void> _pickUserPhotoFromCamera() async {
-    try {
-      final pickedFile =
-          await ImagePicker().pickImage(source: ImageSource.camera);
-      if (pickedFile != null) {
-        final pickedImage = File(pickedFile.path);
-        setState(() {
-          _userPhoto = pickedImage;
-        });
-      }
-    } catch (e) {
-      print('Error picking image from camera: $e');
     }
   }
 
@@ -93,6 +78,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 title: Text('Gallery'),
                 onTap: () {
                   _pickUserPhoto(ImageSource.gallery);
+                  _saveChanges();
                   Navigator.of(context).pop();
                 },
               ),
@@ -100,6 +86,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 title: Text('Camera'),
                 onTap: () {
                   _pickUserPhoto(ImageSource.camera);
+                  _saveChanges();
                   Navigator.of(context).pop();
                 },
               ),
@@ -343,7 +330,7 @@ class InAppWebViewPage extends StatelessWidget {
             crossPlatform: InAppWebViewOptions(),
           ),
           onWebViewCreated: (InAppWebViewController controller) {
-            print("WebView created!");
+            print("WebView created");
           },
           onLoadStart: (controller, url) {
             print("WebView loading started: $url");

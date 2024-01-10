@@ -27,54 +27,42 @@ class ThreePhotosScreen extends StatelessWidget {
     ),
     PhotoInfo(
       imagePath: "assets/img4.png",
-      title: "Onboarding Process",
+      title: "Cryptocurrency Basics",
       description:
-          'Joining our team is just the beginning. Learn about our seamless onboarding process that ensures you hit the ground running.\n\n'
-          'Our onboarding process is designed to make you feel right at home from day one. You\'ll be introduced to our company culture, meet your mentor, and get to know the incredible individuals that make up our dynamic team. We believe that a smooth onboarding experience sets the foundation for a successful journey with us.',
+          'Embark on a journey into the exciting world of cryptocurrency. Understand what a cryptocurrency exchange is, how it functions, and why it plays a pivotal role in the digital asset ecosystem. Delve into the dynamic landscape of blockchain technology and explore the limitless possibilities it offers.',
     ),
     PhotoInfo(
       imagePath: "assets/img5.png",
-      title: "Innovation Hub",
+      title: "Trading Innovation Hub",
       description:
-          'Explore the epicenter of creativity within our workplace. Uncover how our company culture fosters innovation and collaboration.\n\n'
-          'Step into our innovation hub, where ideas come to life. Our company culture thrives on creativity, and you\'ll discover how our team collaborates to push boundaries and create groundbreaking solutions. Meet the minds behind the innovation and see how we\'re shaping the future together.',
+          'Discover our innovation hub dedicated to cryptocurrency trading. Immerse yourself in an environment that fosters creativity and collaboration, where groundbreaking solutions in the realm of digital assets come to life. Meet the minds behind the innovation and witness how we shape the future of crypto together.',
     ),
     PhotoInfo(
       imagePath: "assets/img6.png",
-      title: "Employee Growth Initiatives",
+      title: "Crypto Growth Initiatives",
       description:
-          'Discover the various avenues we offer for personal and professional development. From mentorship programs to continuous learning opportunities, we invest in your growth.\n\n'
-          'We believe in nurturing talent. Our mentorship programs provide guidance and support, while our commitment to continuous learning ensures that every team member has the tools to succeed. Explore the avenues for personal and professional development that await you here.',
+          'Embark on a journey of continuous growth and development in the realm of cryptocurrencies. Our commitment to your personal and professional advancement goes beyond boundaries. Explore a vast array of initiatives, from cutting-edge mentorship programs to immersive learning opportunities in blockchain technology. We invest in your potential, ensuring you thrive in the ever-evolving landscape of digital assets.',
     ),
     PhotoInfo(
       imagePath: "assets/img7.png",
-      title: "Wellness and Work-Life Balance",
+      title: "Blockchain Wellness and Balance",
       description:
-          'Balancing work and life is key to our success. Learn about our initiatives promoting employee wellness and maintaining a healthy work-life balance.\n\n'
-          'At our company, we prioritize your well-being. Explore the initiatives we have in place to support your mental and physical health, ensuring that you can bring your best self to work every day. Discover a workplace where balance is not just encouraged but embraced.',
+          'Achieving balance in the fast-paced world of blockchain is paramount to our collective success. Immerse yourself in understanding how our initiatives promote the well-being of cryptocurrency enthusiasts. Explore the strategies we employ to maintain a healthy work-life balance within the dynamic and exciting crypto space. Your holistic wellness is not just encouraged but central to our thriving crypto community.',
     ),
     PhotoInfo(
       imagePath: "assets/img8.png",
-      title: "Team-building Adventures",
+      title: "Crypto Team-building Adventures",
       description:
-          'Building strong connections is at the heart of our success. Dive into the exciting team-building adventures that strengthen our bonds and foster a collaborative environment.\n\n'
-          'Teamwork makes the dream work. Join us on thrilling team-building adventures that go beyond the office walls. From outdoor excursions to interactive workshops, you\'ll experience the camaraderie that fuels our success.',
-    ),
-    PhotoInfo(
-      imagePath: "assets/img9.png",
-      title: "Diversity and Inclusion Initiatives",
-      description:
-          'Embracing diversity is our strength. Learn about the initiatives we\'ve implemented to foster an inclusive workplace where every voice is heard and valued.\n\n'
-          'We celebrate diversity in all its forms. Explore the initiatives that make our workplace a welcoming and inclusive environment. Discover how we\'re committed to creating a space where every team member feels respected, represented, and empowered.',
+          'Building robust connections lies at the core of our success in the cryptocurrency realm. Dive into exhilarating team-building adventures that not only strengthen our bonds but also foster a collaborative environment for navigating the multifaceted landscape of digital assets. Join us on thrilling excursions and interactive workshops where camaraderie fuels our shared success in the exciting world of crypto innovation.',
     ),
     PhotoInfo(
       imagePath: "assets/img10.png",
-      title: "Client Success Stories",
+      title: "Crypto Success Stories",
       description:
-          'Behind every project is a story of success. Dive into our client success stories and see how our team\'s dedication and expertise make a lasting impact.\n\n'
-          'Our projects aren\'t just tasks; they\'re success stories waiting to be told. Explore the achievements of our team as we partner with clients to overcome challenges and achieve their goals. Learn how your contributions can be part of the next chapter in our success story.',
-    )
+          'Discover the narratives behind the triumphs of every crypto project. Immerse yourself in our client success stories within the vast world of blockchain. Witness firsthand how our teams unwavering dedication and expertise make a lasting impact on the ever-evolving crypto landscape. Explore how your unique contributions can be an integral part of the next compelling chapter in our ongoing success story within the dynamic and transformative cryptocurrency space.',
+    ),
   ];
+
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider.value(
@@ -91,9 +79,9 @@ class ThreePhotosScreen extends StatelessWidget {
             child: ListView(
               children: [
                 SizedBox(
-                  height: MediaQuery.of(context).size.height - 180,
+                  height: MediaQuery.of(context).size.height - 170,
                   child: ListView.builder(
-                    itemCount: photoDataList.length - 1,
+                    itemCount: photoDataList.length,
                     itemBuilder: (context, index) {
                       int photoIndex = index ~/ 2 * 3;
                       bool isTwoCardsRow = index.isEven;
@@ -106,14 +94,20 @@ class ThreePhotosScreen extends StatelessWidget {
                                   _onPhotoTap(
                                       context, photoDataList[photoIndex]);
                                 },
-                                child: Container(
-                                  margin: EdgeInsets.only(right: 9, top: 20),
-                                  height: 300,
-                                  width:
-                                      MediaQuery.of(context).size.width / 2 - 9,
-                                  child: CustomCardWidget(
-                                    title: photoDataList[photoIndex].title,
-                                    image: photoDataList[photoIndex].imagePath,
+                                child: Transform(
+                                  transform: Matrix4.translationValues(
+                                      -10.0, 0.0, 0.0),
+                                  child: Container(
+                                    margin: EdgeInsets.only(top: 20),
+                                    height: 300,
+                                    width:
+                                        MediaQuery.of(context).size.width / 2 -
+                                            9,
+                                    child: CustomCardWidget(
+                                      title: photoDataList[photoIndex].title,
+                                      image:
+                                          photoDataList[photoIndex].imagePath,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -124,15 +118,21 @@ class ThreePhotosScreen extends StatelessWidget {
                                     photoDataList[photoIndex + 1],
                                   );
                                 },
-                                child: Container(
-                                  margin: EdgeInsets.only(left: 9, top: 20),
-                                  height: 300,
-                                  width:
-                                      MediaQuery.of(context).size.width / 2 - 9,
-                                  child: CustomCardWidget(
-                                    title: photoDataList[photoIndex + 1].title,
-                                    image:
-                                        photoDataList[photoIndex + 1].imagePath,
+                                child: Transform(
+                                  transform: Matrix4.translationValues(
+                                      21.0, 0.0, 10.0),
+                                  child: Container(
+                                    margin: EdgeInsets.only(top: 20),
+                                    height: 300,
+                                    width:
+                                        MediaQuery.of(context).size.width / 2 -
+                                            9,
+                                    child: CustomCardWidget(
+                                      title:
+                                          photoDataList[photoIndex + 1].title,
+                                      image: photoDataList[photoIndex + 1]
+                                          .imagePath,
+                                    ),
                                   ),
                                 ),
                               ),

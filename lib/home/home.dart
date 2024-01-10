@@ -140,68 +140,62 @@ class UserInfoDetailsWidget extends StatefulWidget {
 }
 
 class _UserInfoDetailsWidgetState extends State<UserInfoDetailsWidget> {
-  final UserPhotoCache _photoCache = UserPhotoCache();
   File? _userPhoto;
   String? _userName;
 
   @override
   void initState() {
-     _loadUserData();
+    _loadUserData();
     super.initState();
   }
 
-Future<void> _saveChanges() async {
-  try {
-    final userPhotoToSave = _userPhoto ?? File('assets/per2.png');
-    await _photoCache.saveUserPhoto(userPhotoToSave);
-
-    print('User photo saved successfully');
-
-    setState(() {
-      _userPhoto = userPhotoToSave;
-    });
-  } catch (e) {
-    print('Error saving user photo: $e');
+  Future<void> _saveChanges() async {
+    try {
+      final userPhotoToSave = _userPhoto ?? File('assets/per2.png');
+      setState(() {
+        _userPhoto = userPhotoToSave;
+      });
+      await PhotoStorage.saveUserPhoto(userPhotoToSave);
+    } catch (e) {
+      print('Error saving user photo: $e');
+    }
   }
-}
 
-Future<void> _loadUserData() async {
-  try {
-    final loadedPhoto = await _photoCache.loadUserPhoto();
+  Future<void> _loadUserData() async {
+    final loadedPhoto = await PhotoStorage.loadUserPhoto();
     final loadedName = await UserNameCache.loadUserName();
 
     if (mounted) {
       setState(() {
         _userPhoto = loadedPhoto;
-        _userName = loadedName;
+        _userName = loadedName ?? '';
       });
     }
-    print('User data loaded successfully');
+  }
+
+Future<void> _pickUserPhoto(ImageSource source) async {
+  try {
+    final pickedFile = await ImagePicker().pickImage(source: source);
+    if (pickedFile != null) {
+      final pickedImage = File(pickedFile.path);
+      await PhotoStorage.saveUserPhoto(pickedImage);
+      _onUserPhotoChanged(pickedImage);
+    }
   } catch (e) {
-    print('Error loading user data: $e');
+    if (e is PlatformException && e.code == 'multiple_request') {
+      print('Image picking cancelled by a second request');
+    } else {
+      print('Error picking image: $e');
+    }
   }
 }
 
 
-  Future<void> _pickUserPhoto(ImageSource source) async {
-    try {
-      print('Picking user photo...');
-      final pickedFile = await ImagePicker().pickImage(source: source);
-      if (pickedFile != null) {
-        final pickedImage = File(pickedFile.path);
-
-        await _photoCache.saveUserPhoto(pickedImage);
-        setState(() {
-          _userPhoto = pickedImage;
-        });
-
-        // Сохраните изменения в кеше
-        _saveChanges();
-        print('User photo picked successfully');
-      }
-    } catch (e) {
-      print('Error picking image: $e');
-    }
+  Future<void> _onUserPhotoChanged(File? newPhoto) async {
+    setState(() {
+      _userPhoto = newPhoto;
+    });
+    _saveChanges();
   }
 
   @override
@@ -266,16 +260,26 @@ Future<void> _loadUserData() async {
             children: [
               ListTile(
                 title: Text('Gallery'),
-                onTap: () {
-                  _pickUserPhoto(ImageSource.gallery);
+                onTap: () async {
                   Navigator.of(context).pop();
+                  final pickedFile = await ImagePicker()
+                      .pickImage(source: ImageSource.gallery);
+                  if (pickedFile != null) {
+                    _onUserPhotoChanged(File(pickedFile.path));
+                    _pickUserPhoto(ImageSource.gallery);
+                  }
                 },
               ),
               ListTile(
                 title: Text('Camera'),
-                onTap: () {
-                  _pickUserPhoto(ImageSource.camera);
+                onTap: () async {
                   Navigator.of(context).pop();
+                  final pickedFile =
+                      await ImagePicker().pickImage(source: ImageSource.camera);
+                  if (pickedFile != null) {
+                    _onUserPhotoChanged(File(pickedFile.path));
+                    _pickUserPhoto(ImageSource.camera);
+                  }
                 },
               ),
             ],

@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:path_provider/path_provider.dart';
 
 class PhotoStorage {
@@ -7,11 +8,15 @@ class PhotoStorage {
     return File('${directory.path}/user_photo.jpg');
   }
 
-  static Future<void> saveUserPhoto(File photoFile) async {
-    final cacheFile = await getUserPhotoFile();
-    await photoFile.copy(cacheFile.path);
+  static Future<void> saveUserPhoto(File photo) async {
+    try {
+      final cacheFile = await getUserPhotoFile();
+      await cacheFile.writeAsBytes(await photo.readAsBytes());
 
-    print('User photo saved successfully');
+      print('User photo saved successfully');
+    } catch (e) {
+      print('Error saving user photo: $e');
+    }
   }
 
   static Future<File?> loadUserPhoto() async {
@@ -61,7 +66,7 @@ class UserPhotoCache {
   Future<File?> loadUserPhoto() async {
     return await PhotoStorage.loadUserPhoto();
   }
-  
+
   Future<void> saveUserPhoto(File photoFile) async {
     await PhotoStorage.saveUserPhoto(photoFile);
   }

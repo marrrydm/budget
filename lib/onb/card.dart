@@ -1,8 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_task/onb/photo_Info.dart';
-import 'package:flutter_task/onb/provider.dart';
-import 'package:flutter_task/onb/second_screen.dart';
-import 'package:provider/provider.dart';
 
 class CustomCardWidget extends StatelessWidget {
   final String title;
