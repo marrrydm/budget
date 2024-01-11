@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_task/onb/photo_Info.dart';
+import 'package:flutter_task/data/photo_Info.dart';
 
 class PhotoInfoProvider extends ChangeNotifier {
   PhotoInfo? _currentPhotoInfo;

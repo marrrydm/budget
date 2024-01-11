@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_task/onb/provider.dart';
+import 'package:flutter_task/data/provider.dart';
 import 'tabs.dart';
 
 void main() {

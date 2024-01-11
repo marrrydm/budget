@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import 'package:flutter_task/home/user_photo_cache.dart';
-import 'package:flutter_task/user_data_provider.dart';
+import 'package:flutter_task/data/user_photo_cache.dart';
+import 'package:flutter_task/data/user_data_provider.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';

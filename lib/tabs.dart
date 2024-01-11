@@ -3,7 +3,7 @@ import 'package:flutter_task/home/home.dart';
 import 'package:flutter_task/budget/budget_screen.dart';
 import 'package:flutter_task/onb/photo_screen.dart';
 import 'package:flutter_task/settings/settings_screen.dart';
-import 'package:flutter_task/user_data_provider.dart';
+import 'package:flutter_task/data/user_data_provider.dart';
 
 class MyTabs extends StatefulWidget {
   @override
