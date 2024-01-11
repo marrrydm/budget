@@ -14,50 +14,128 @@ class _SettingsScreenState extends State<SettingsScreen> {
   TextEditingController _nameController = TextEditingController();
   final UserPhotoCache _photoCache = UserPhotoCache();
   final ImagePicker _picker = ImagePicker();
+  bool _isPicking = false;
 
   @override
   void initState() {
-    _loadUserPhotoAndName();
+    _loadUserData();
     super.initState();
   }
 
   @override
-  void dispose() {
-    _saveChanges();
-    super.dispose();
-  }
-
-  Future<void> _loadUserPhotoAndName() async {
-    final loadedPhoto =
-        await _photoCache.loadUserPhoto() ?? File('assets/per2.png');
-    final loadedName = await _photoCache.loadUserName() ?? '';
-
-    setState(() {
-      _userPhoto = loadedPhoto;
-      _nameController.text = loadedName;
-    });
+  void didChangeDependencies() {
+    _loadUserData();
+    super.didChangeDependencies();
   }
 
   Future<void> _saveChanges() async {
-    final userNameToSave = _nameController.text;
-    await _photoCache.saveUserName(userNameToSave);
+    try {
+      final userNameToSave = _nameController.text;
+      await _photoCache.saveUserName(userNameToSave);
+      
+      final userPhotoToSave = _userPhoto ?? File('assets/per2.png');
+      setState(() {
+        _userPhoto = userPhotoToSave;
+      });
 
-    final userPhotoToSave = _userPhoto ?? File('assets/per2.png');
-    await _photoCache.saveUserPhoto(userPhotoToSave);
+      await PhotoStorage.deleteUserPhoto();
+
+      await PhotoStorage.saveUserPhoto(userPhotoToSave);
+    } catch (e) {
+      print('Error saving user photo: $e');
+    }
   }
 
-    Future<void> _pickUserPhoto(ImageSource source) async {
-    final pickedFile = await _picker.pickImage(
-      source: source,
-      imageQuality: 50,
-    );
+  Future<void> _loadUserData() async {
+    final loadedPhoto = await PhotoStorage.loadUserPhoto();
+     final loadedName = await _photoCache.loadUserName() ?? '';
 
-    if (pickedFile != null) {
+    if (mounted) {
       setState(() {
-        _userPhoto = File(pickedFile.path);
+        _userPhoto = loadedPhoto;
+        _nameController.text = loadedName;
       });
     }
   }
+
+  Future<void> _onUserPhotoChanged(File? newPhoto) async {
+    if (_userPhoto != null) {
+      await PhotoStorage.deleteUserPhoto();
+    }
+    setState(() {
+      _userPhoto = newPhoto;
+    });
+    _saveChanges();
+  }
+
+  Future<void> _pickUserPhoto(ImageSource source) async {
+    if (_isPicking) {
+      return;
+    }
+
+    try {
+      setState(() {
+        _isPicking = true;
+      });
+
+      final pickedFile = await _picker.pickImage(source: source);
+      if (pickedFile != null) {
+        final pickedImage = File(pickedFile.path);
+        await PhotoStorage.saveUserPhoto(pickedImage);
+        _onUserPhotoChanged(pickedImage);
+      }
+    } catch (e, stackTrace) {
+      print('Error picking image: $e\n$stackTrace');
+    } finally {
+      await Future.delayed(Duration(milliseconds: 500));
+      setState(() {
+        _isPicking = false;
+      });
+    }
+  }
+
+  // Future<void> _loadUserPhotoAndName() async {
+  //   try {
+  //     final loadedPhoto = await _photoCache.loadUserPhoto() ?? File('assets/per2.png');
+  //     final loadedName = await _photoCache.loadUserName() ?? '';
+
+  //     setState(() {
+  //       _userPhoto = loadedPhoto;
+  //       _nameController.text = loadedName;
+  //     });
+  //   } catch (e) {
+  //     print('Error loading user photo and name: $e');
+  //   }
+  // }
+
+  // Future<void> _saveChanges() async {
+  //   try {
+      // final userNameToSave = _nameController.text;
+      // await _photoCache.saveUserName(userNameToSave);
+
+  //     final userPhotoToSave = _userPhoto ?? File('assets/per2.png');
+  //     await _photoCache.saveUserPhoto(userPhotoToSave);
+  //   } catch (e) {
+  //     print('Error saving user photo and name: $e');
+  //   }
+  // }
+
+  // Future<void> _pickUserPhoto(ImageSource source) async {
+  //   try {
+  //     final pickedFile = await _picker.pickImage(
+  //       source: source,
+  //       imageQuality: 50,
+  //     );
+
+  //     if (pickedFile != null) {
+  //       setState(() {
+  //         _userPhoto = File(pickedFile.path);
+  //       });
+  //     }
+  //   } catch (e) {
+  //     print('Error picking user photo: $e');
+  //   }
+  // }
 
   Future<void> _showImagePickerDialog(BuildContext context) async {
     await showDialog(
@@ -70,18 +148,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               ListTile(
                 title: Text('Gallery'),
-                onTap: () {
-                  _pickUserPhoto(ImageSource.gallery);
-                  _saveChanges();
+                onTap: () async {
                   Navigator.of(context).pop();
+                  final pickedFile = await ImagePicker()
+                      .pickImage(source: ImageSource.gallery);
+                  if (pickedFile != null) {
+                    _onUserPhotoChanged(File(pickedFile.path));
+                    _pickUserPhoto(ImageSource.gallery);
+                  }
                 },
               ),
               ListTile(
                 title: Text('Camera'),
-                onTap: () {
-                  _pickUserPhoto(ImageSource.camera);
-                  _saveChanges();
+                onTap: () async {
                   Navigator.of(context).pop();
+                  final pickedFile =
+                      await ImagePicker().pickImage(source: ImageSource.camera);
+                  if (pickedFile != null) {
+                    _onUserPhotoChanged(File(pickedFile.path));
+                    _pickUserPhoto(ImageSource.camera);
+                  }
                 },
               ),
             ],
