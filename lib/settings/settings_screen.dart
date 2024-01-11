@@ -24,6 +24,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   void dispose() {
+    final userNameToSave = _nameController.text;
+    _photoCache.saveUserName(userNameToSave);
     super.dispose();
   }
 
@@ -52,7 +54,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       print('Error saving user photo: $e');
     }
   }
-
+  
   Future<void> _loadUserData() async {
     final loadedPhoto = await PhotoStorage.loadUserPhoto();
     final loadedName = await UserNameCache.loadUserName() ?? '';
@@ -76,33 +78,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _pickUserPhoto(ImageSource source) async {
-  if (_isPicking) {
-    return;
-  }
-
-  try {
-    if (mounted) {
-    setState(() {
-      _isPicking = false;
-    });
-  }
-
-    final pickedFile = await _picker.pickImage(source: source);
-    if (pickedFile != null) {
-      final pickedImage = File(pickedFile.path);
-      await PhotoStorage.saveUserPhoto(pickedImage);
-      _onUserPhotoChanged(pickedImage);
+    if (_isPicking) {
+      return;
     }
-  } catch (e, stackTrace) {
-    print('Error picking image: $e\n$stackTrace');
-  } finally {
-    if (mounted) {
-    setState(() {
-      _isPicking = false;
-    });
+
+    try {
+      if (mounted) {
+        setState(() {
+          _isPicking = false;
+        });
+      }
+
+      final pickedFile = await _picker.pickImage(source: source);
+      if (pickedFile != null) {
+        final pickedImage = File(pickedFile.path);
+        await PhotoStorage.saveUserPhoto(pickedImage);
+        _onUserPhotoChanged(pickedImage);
+      }
+    } catch (e, stackTrace) {
+      print('Error picking image: $e\n$stackTrace');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isPicking = false;
+        });
+      }
+    }
   }
-  }
-}
 
   Future<void> _showImagePickerDialog(BuildContext context) async {
     await showDialog(
