@@ -32,7 +32,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     try {
       final userNameToSave = _nameController.text;
       await _photoCache.saveUserName(userNameToSave);
-      
+
       final userPhotoToSave = _userPhoto ?? File('assets/per2.png');
       setState(() {
         _userPhoto = userPhotoToSave;
@@ -93,49 +93,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       });
     }
   }
-
-  // Future<void> _loadUserPhotoAndName() async {
-  //   try {
-  //     final loadedPhoto = await _photoCache.loadUserPhoto() ?? File('assets/per2.png');
-  //     final loadedName = await _photoCache.loadUserName() ?? '';
-
-  //     setState(() {
-  //       _userPhoto = loadedPhoto;
-  //       _nameController.text = loadedName;
-  //     });
-  //   } catch (e) {
-  //     print('Error loading user photo and name: $e');
-  //   }
-  // }
-
-  // Future<void> _saveChanges() async {
-  //   try {
-      // final userNameToSave = _nameController.text;
-      // await _photoCache.saveUserName(userNameToSave);
-
-  //     final userPhotoToSave = _userPhoto ?? File('assets/per2.png');
-  //     await _photoCache.saveUserPhoto(userPhotoToSave);
-  //   } catch (e) {
-  //     print('Error saving user photo and name: $e');
-  //   }
-  // }
-
-  // Future<void> _pickUserPhoto(ImageSource source) async {
-  //   try {
-  //     final pickedFile = await _picker.pickImage(
-  //       source: source,
-  //       imageQuality: 50,
-  //     );
-
-  //     if (pickedFile != null) {
-  //       setState(() {
-  //         _userPhoto = File(pickedFile.path);
-  //       });
-  //     }
-  //   } catch (e) {
-  //     print('Error picking user photo: $e');
-  //   }
-  // }
 
   Future<void> _showImagePickerDialog(BuildContext context) async {
     await showDialog(
