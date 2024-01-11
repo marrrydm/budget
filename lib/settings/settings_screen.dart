@@ -13,6 +13,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   File? _userPhoto;
   TextEditingController _nameController = TextEditingController();
   final UserPhotoCache _photoCache = UserPhotoCache();
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -45,23 +46,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await _photoCache.saveUserPhoto(userPhotoToSave);
   }
 
-  Future<void> _pickUserPhoto(ImageSource source) async {
-    try {
-      final pickedFile = await ImagePicker().pickImage(source: source);
-      if (pickedFile != null) {
-        final pickedImage = File(pickedFile.path);
+    Future<void> _pickUserPhoto(ImageSource source) async {
+    final pickedFile = await _picker.pickImage(
+      source: source,
+      imageQuality: 50,
+    );
 
-        setState(() {
-          _userPhoto = pickedImage;
-        });
-
-        await Future.delayed(Duration(milliseconds: 500));
-
-        await _photoCache.saveUserPhoto(pickedImage);
-        _saveChanges();
-      }
-    } catch (e) {
-      print('Error picking image: $e');
+    if (pickedFile != null) {
+      setState(() {
+        _userPhoto = File(pickedFile.path);
+      });
     }
   }
 

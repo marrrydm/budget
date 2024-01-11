@@ -140,6 +140,8 @@ class UserInfoDetailsWidget extends StatefulWidget {
 }
 
 class _UserInfoDetailsWidgetState extends State<UserInfoDetailsWidget> {
+  final ImagePicker _picker = ImagePicker();
+  bool _isPicking = false;
   File? _userPhoto;
   String? _userName;
 
@@ -149,12 +151,21 @@ class _UserInfoDetailsWidgetState extends State<UserInfoDetailsWidget> {
     super.initState();
   }
 
+  @override
+  void didChangeDependencies() {
+    _loadUserData();
+    super.didChangeDependencies();
+  }
+
   Future<void> _saveChanges() async {
     try {
       final userPhotoToSave = _userPhoto ?? File('assets/per2.png');
       setState(() {
         _userPhoto = userPhotoToSave;
       });
+
+      await PhotoStorage.deleteUserPhoto();
+
       await PhotoStorage.saveUserPhoto(userPhotoToSave);
     } catch (e) {
       print('Error saving user photo: $e');
@@ -173,25 +184,36 @@ class _UserInfoDetailsWidgetState extends State<UserInfoDetailsWidget> {
     }
   }
 
-Future<void> _pickUserPhoto(ImageSource source) async {
-  try {
-    final pickedFile = await ImagePicker().pickImage(source: source);
-    if (pickedFile != null) {
-      final pickedImage = File(pickedFile.path);
-      await PhotoStorage.saveUserPhoto(pickedImage);
-      _onUserPhotoChanged(pickedImage);
+  Future<void> _pickUserPhoto(ImageSource source) async {
+    if (_isPicking) {
+      return;
     }
-  } catch (e) {
-    if (e is PlatformException && e.code == 'multiple_request') {
-      print('Image picking cancelled by a second request');
-    } else {
-      print('Error picking image: $e');
+
+    try {
+      setState(() {
+        _isPicking = true;
+      });
+
+      final pickedFile = await _picker.pickImage(source: source);
+      if (pickedFile != null) {
+        final pickedImage = File(pickedFile.path);
+        await PhotoStorage.saveUserPhoto(pickedImage);
+        _onUserPhotoChanged(pickedImage);
+      }
+    } catch (e, stackTrace) {
+      print('Error picking image: $e\n$stackTrace');
+    } finally {
+      await Future.delayed(Duration(milliseconds: 500));
+      setState(() {
+        _isPicking = false;
+      });
     }
   }
-}
-
 
   Future<void> _onUserPhotoChanged(File? newPhoto) async {
+    if (_userPhoto != null) {
+      await PhotoStorage.deleteUserPhoto();
+    }
     setState(() {
       _userPhoto = newPhoto;
     });

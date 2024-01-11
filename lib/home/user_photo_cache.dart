@@ -3,9 +3,28 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 
 class PhotoStorage {
+    static const String _photoFileName = 'user_photo.jpg';
+
   static Future<File> getUserPhotoFile() async {
     final directory = await getApplicationDocumentsDirectory();
     return File('${directory.path}/user_photo.jpg');
+  }
+
+  static Future<File> getUserPhoto() async {
+    Directory appDocDir = await getApplicationDocumentsDirectory();
+    String photoPath = "${appDocDir.path}/$_photoFileName";
+    return File(photoPath);
+  }
+
+  static Future<void> deleteUserPhoto() async {
+    try {
+      File photo = await getUserPhoto();
+      if (await photo.exists()) {
+        await photo.delete();
+      }
+    } catch (e) {
+      print('Error deleting user photo: $e');
+    }
   }
 
   static Future<void> saveUserPhoto(File photo) async {
