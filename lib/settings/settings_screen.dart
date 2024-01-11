@@ -22,6 +22,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     super.initState();
   }
 
+    @override
+  void dispose() {
+    _saveChanges();
+    super.dispose();
+  }
+
   @override
   void didChangeDependencies() {
     _loadUserData();
