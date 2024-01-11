@@ -198,9 +198,6 @@ class _UserInfoDetailsWidgetState extends State<UserInfoDetailsWidget> {
 
   @override
   void didChangeDependencies() {
-    final userNameToSave =
-        UserData().userName?.isNotEmpty == true ? UserData().userName! : 'Name';
-    UserNameCache.saveUserName(userNameToSave);
     _userDataProvider.loadUserData();
     super.didChangeDependencies();
   }
