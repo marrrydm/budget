@@ -3,17 +3,23 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 
 class PhotoStorage {
-    static const String _photoFileName = 'user_photo.jpg';
+  static const String _photoFileName = 'user_photo.jpg';
 
   static Future<File> getUserPhotoFile() async {
     final directory = await getApplicationDocumentsDirectory();
-    return File('${directory.path}/user_photo.jpg');
+    return File('${directory.path}/$_photoFileName');
   }
 
   static Future<File> getUserPhoto() async {
-    Directory appDocDir = await getApplicationDocumentsDirectory();
-    String photoPath = "${appDocDir.path}/$_photoFileName";
-    return File(photoPath);
+    try {
+      final cacheFile = await getUserPhotoFile();
+      if (await cacheFile.exists()) {
+        return cacheFile;
+      }
+    } catch (e) {
+      print('Error getting user photo: $e');
+    }
+    return File('assets/default_photo.png'); // Return a default photo or null
   }
 
   static Future<void> deleteUserPhoto() async {
@@ -21,6 +27,7 @@ class PhotoStorage {
       File photo = await getUserPhoto();
       if (await photo.exists()) {
         await photo.delete();
+        print('User photo deleted successfully');
       }
     } catch (e) {
       print('Error deleting user photo: $e');
@@ -30,8 +37,12 @@ class PhotoStorage {
   static Future<void> saveUserPhoto(File photo) async {
     try {
       final cacheFile = await getUserPhotoFile();
-      await cacheFile.writeAsBytes(await photo.readAsBytes());
 
+      if (!(await cacheFile.parent!.exists())) {
+        await cacheFile.parent!.create(recursive: true);
+      }
+
+      await cacheFile.writeAsBytes(await photo.readAsBytes());
       print('User photo saved successfully');
     } catch (e) {
       print('Error saving user photo: $e');
@@ -47,7 +58,7 @@ class PhotoStorage {
     } catch (e) {
       print('Error loading user photo: $e');
     }
-    return null;
+    return null; // Return null or a default photo
   }
 }
 

@@ -22,7 +22,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     super.initState();
   }
 
-    @override
+  @override
   void dispose() {
     _saveChanges();
     super.dispose();
@@ -40,12 +40,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
       await _photoCache.saveUserName(userNameToSave);
 
       final userPhotoToSave = _userPhoto ?? File('assets/per2.png');
-      setState(() {
-        _userPhoto = userPhotoToSave;
-      });
+
+      if (mounted) {
+        setState(() {
+          _userPhoto = userPhotoToSave;
+        });
+      }
 
       await PhotoStorage.deleteUserPhoto();
-
       await PhotoStorage.saveUserPhoto(userPhotoToSave);
     } catch (e) {
       print('Error saving user photo: $e');
@@ -54,7 +56,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _loadUserData() async {
     final loadedPhoto = await PhotoStorage.loadUserPhoto();
-     final loadedName = await _photoCache.loadUserName() ?? '';
+    final loadedName = await UserNameCache.loadUserName() ?? '';
 
     if (mounted) {
       setState(() {
@@ -93,7 +95,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     } catch (e, stackTrace) {
       print('Error picking image: $e\n$stackTrace');
     } finally {
-      await Future.delayed(Duration(milliseconds: 500));
       setState(() {
         _isPicking = false;
       });

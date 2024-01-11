@@ -160,12 +160,14 @@ class _UserInfoDetailsWidgetState extends State<UserInfoDetailsWidget> {
   Future<void> _saveChanges() async {
     try {
       final userPhotoToSave = _userPhoto ?? File('assets/per2.png');
-      setState(() {
-        _userPhoto = userPhotoToSave;
-      });
+
+      if (mounted) {
+        setState(() {
+          _userPhoto = userPhotoToSave;
+        });
+      }
 
       await PhotoStorage.deleteUserPhoto();
-
       await PhotoStorage.saveUserPhoto(userPhotoToSave);
     } catch (e) {
       print('Error saving user photo: $e');
@@ -203,10 +205,10 @@ class _UserInfoDetailsWidgetState extends State<UserInfoDetailsWidget> {
     } catch (e, stackTrace) {
       print('Error picking image: $e\n$stackTrace');
     } finally {
-      await Future.delayed(Duration(milliseconds: 500));
-      setState(() {
-        _isPicking = false;
-      });
+      // await Future.delayed(Duration(milliseconds: 500));
+      // setState(() {
+      _isPicking = false;
+      // });
     }
   }
 
