@@ -205,10 +205,7 @@ class _UserInfoDetailsWidgetState extends State<UserInfoDetailsWidget> {
     } catch (e, stackTrace) {
       print('Error picking image: $e\n$stackTrace');
     } finally {
-      // await Future.delayed(Duration(milliseconds: 500));
-      // setState(() {
       _isPicking = false;
-      // });
     }
   }
 

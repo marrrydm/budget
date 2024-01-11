@@ -95,9 +95,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     } catch (e, stackTrace) {
       print('Error picking image: $e\n$stackTrace');
     } finally {
-      setState(() {
         _isPicking = false;
-      });
     }
   }
 
