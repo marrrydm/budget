@@ -1,112 +1,112 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import 'dart:io';
 import 'package:flutter_task/home/user_photo_cache.dart';
+import 'package:flutter_task/user_data_provider.dart';
+import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 
-class SettingsScreen extends StatefulWidget {
-  @override
-  _SettingsScreenState createState() => _SettingsScreenState();
-}
-
-class _SettingsScreenState extends State<SettingsScreen> {
-  File? _userPhoto;
-  TextEditingController _nameController = TextEditingController();
-  final UserPhotoCache _photoCache = UserPhotoCache();
+class ImagePickerHandler {
   final ImagePicker _picker = ImagePicker();
   bool _isPicking = false;
 
-  @override
-  void initState() {
-    _loadUserData();
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    final userNameToSave = _nameController.text;
-    _photoCache.saveUserName(userNameToSave);
-    super.dispose();
-  }
-
-  @override
-  void didChangeDependencies() {
-    _loadUserData();
-    super.didChangeDependencies();
-  }
-
-  Future<void> _saveChanges() async {
-    try {
-      final userNameToSave = _nameController.text;
-      await _photoCache.saveUserName(userNameToSave);
-
-      final userPhotoToSave = _userPhoto ?? File('assets/per2.png');
-
-      if (mounted) {
-        setState(() {
-          _userPhoto = userPhotoToSave;
-        });
-      }
-
-      await PhotoStorage.deleteUserPhoto();
-      await PhotoStorage.saveUserPhoto(userPhotoToSave);
-    } catch (e) {
-      print('Error saving user photo: $e');
-    }
-  }
-  
-  Future<void> _loadUserData() async {
-    final loadedPhoto = await PhotoStorage.loadUserPhoto();
-    final loadedName = await UserNameCache.loadUserName() ?? '';
-
-    if (mounted) {
-      setState(() {
-        _userPhoto = loadedPhoto;
-        _nameController.text = loadedName;
-      });
-    }
-  }
-
-  Future<void> _onUserPhotoChanged(File? newPhoto) async {
-    if (_userPhoto != null) {
-      await PhotoStorage.deleteUserPhoto();
-    }
-    setState(() {
-      _userPhoto = newPhoto;
-    });
-    _saveChanges();
-  }
-
-  Future<void> _pickUserPhoto(ImageSource source) async {
+  Future<void> pickUserPhoto(
+      UserDataProvider userDataProvider, ImageSource source) async {
     if (_isPicking) {
       return;
     }
 
     try {
-      if (mounted) {
-        setState(() {
-          _isPicking = false;
-        });
+      _isPicking = true;
+
+      XFile? pickedFile;
+      if (source == ImageSource.camera) {
+        pickedFile = await _picker.pickImage(
+          source: source,
+          maxHeight: 800,
+          maxWidth: 800,
+        );
+      } else {
+        pickedFile = await _picker.pickImage(source: source);
       }
 
-      final pickedFile = await _picker.pickImage(source: source);
       if (pickedFile != null) {
         final pickedImage = File(pickedFile.path);
-        await PhotoStorage.saveUserPhoto(pickedImage);
-        _onUserPhotoChanged(pickedImage);
+        await userDataProvider.updateUserPhoto(pickedImage);
       }
     } catch (e, stackTrace) {
       print('Error picking image: $e\n$stackTrace');
     } finally {
-      if (mounted) {
-        setState(() {
-          _isPicking = false;
-        });
-      }
+      _isPicking = false;
+    }
+  }
+}
+
+class SettingsScreen extends StatefulWidget {
+  final UserDataProvider userDataProvider;
+  SettingsScreen(this.userDataProvider);
+
+  @override
+  _SettingsScreenState createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  TextEditingController _nameController = TextEditingController();
+  final UserDataProvider _userDataProvider = UserDataProvider();
+  final ImagePickerHandler _imagePickerHandler = ImagePickerHandler();
+
+  Future<void> _initData() async {
+    await _userDataProvider.loadUserData();
+    final loadedName = await UserNameCache.loadUserName();
+    if (loadedName != null) {
+      _nameController.text = loadedName;
     }
   }
 
+  @override
+  void initState() {
+    super.initState();
+    _initData();
+  }
+
+  @override
+  void dispose() {
+    final userNameToSave = _nameController.text;
+    UserNameCache.saveUserName(userNameToSave);
+    super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    _userDataProvider.loadUserData();
+    super.didChangeDependencies();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider.value(
+      value: _userDataProvider,
+      child: Consumer<UserDataProvider>(
+        builder: (context, userDataProvider, _) {
+          return SettingsScreenContent(
+              _nameController, userDataProvider, _imagePickerHandler);
+        },
+      ),
+    );
+  }
+}
+
+class SettingsScreenContent extends StatelessWidget {
+  final TextEditingController _nameController;
+  final UserDataProvider userDataProvider;
+  final ImagePickerHandler imagePickerHandler;
+
+  SettingsScreenContent(
+      this._nameController, this.userDataProvider, this.imagePickerHandler);
+
   Future<void> _showImagePickerDialog(BuildContext context) async {
+    imageCache?.clear();
+    
     await showDialog(
       context: context,
       builder: (context) {
@@ -119,24 +119,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 title: Text('Gallery'),
                 onTap: () async {
                   Navigator.of(context).pop();
-                  final pickedFile = await ImagePicker()
-                      .pickImage(source: ImageSource.gallery);
-                  if (pickedFile != null) {
-                    _onUserPhotoChanged(File(pickedFile.path));
-                    _pickUserPhoto(ImageSource.gallery);
-                  }
+                  imagePickerHandler.pickUserPhoto(
+                      userDataProvider, ImageSource.gallery);
                 },
               ),
               ListTile(
                 title: Text('Camera'),
                 onTap: () async {
                   Navigator.of(context).pop();
-                  final pickedFile =
-                      await ImagePicker().pickImage(source: ImageSource.camera);
-                  if (pickedFile != null) {
-                    _onUserPhotoChanged(File(pickedFile.path));
-                    _pickUserPhoto(ImageSource.camera);
-                  }
+                  imagePickerHandler.pickUserPhoto(
+                      userDataProvider, ImageSource.camera);
                 },
               ),
             ],
@@ -146,7 +138,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  void _openWebView(String url) {
+  void _openWebView(BuildContext context, String url) {
     Navigator.of(context).push(MaterialPageRoute(
       builder: (context) => InAppWebViewPage(url: url),
     ));
@@ -185,13 +177,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             GestureDetector(
                               onTap: () => _showImagePickerDialog(context),
                               child: CircleAvatar(
+                                key: UniqueKey(), 
                                 radius: 40,
-                                backgroundImage: _userPhoto != null
-                                    ? FileImage(_userPhoto!)
+                                backgroundImage: userDataProvider
+                                            .userData.userPhoto !=
+                                        null
+                                    ? FileImage(
+                                        userDataProvider.userData.userPhoto!)
                                     : null,
-                                child: _userPhoto == null
-                                    ? Icon(Icons.camera_alt)
-                                    : null,
+                                child:
+                                    userDataProvider.userData.userPhoto == null
+                                        ? Icon(Icons.camera_alt)
+                                        : null,
                               ),
                             ),
                             const SizedBox(height: 5),
@@ -284,65 +281,67 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _buildRow(
       String text, String imageName, double screenWidth, String url) {
-    return GestureDetector(
-      onTap: () {
-        if (text == 'Privacy Policy' || text == 'Terms of Use') {
-          _openWebView(url);
-        }
-      },
-      child: Container(
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Container(
-                    width: screenWidth * 0.05,
-                    height: screenWidth * 0.05,
+    return Builder(
+      builder: (context) => GestureDetector(
+        onTap: () {
+          if (text == 'Privacy Policy' || text == 'Terms of Use') {
+            _openWebView(context, url);
+          }
+        },
+        child: Container(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: screenWidth * 0.05,
+                      height: screenWidth * 0.05,
+                      clipBehavior: Clip.antiAlias,
+                      decoration: BoxDecoration(
+                        image: DecorationImage(
+                          image: AssetImage('assets/$imageName'),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 7),
+                    Text(
+                      text,
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 20,
+                        fontFamily: 'SrbijaSans',
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Container(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    width: 24,
+                    height: 24,
                     clipBehavior: Clip.antiAlias,
                     decoration: BoxDecoration(
                       image: DecorationImage(
-                        image: AssetImage('assets/$imageName'),
+                        image: AssetImage('assets/ArrowRight.png'),
                         fit: BoxFit.cover,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 7),
-                  Text(
-                    text,
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 20,
-                      fontFamily: 'SrbijaSans',
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: Container(
-                alignment: Alignment.centerRight,
-                child: Container(
-                  width: 24,
-                  height: 24,
-                  clipBehavior: Clip.antiAlias,
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: AssetImage('assets/ArrowRight.png'),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

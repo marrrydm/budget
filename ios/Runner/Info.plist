@@ -18,6 +18,12 @@
 		<string>6.0</string>
 		<key>CFBundleName</key>
 		<string>flutter_task</string>
+		<key>NSCameraUsageDescription</key>
+		<string>Access to Camera</string>
+		<key>NSMicrophoneUsageDescription</key>
+		<string>Access to Microphone</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>Access to PhotoLibrary</string>
 		<key>UIFileSharingEnabled</key>
 		<true />
 		<key>CFBundlePackageType</key>

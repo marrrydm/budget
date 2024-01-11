@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:path_provider/path_provider.dart';
 
 class PhotoStorage {
@@ -19,7 +18,7 @@ class PhotoStorage {
     } catch (e) {
       print('Error getting user photo: $e');
     }
-    return File('assets/default_photo.png');
+    return File('assets/person.png');
   }
 
   static Future<void> deleteUserPhoto() async {

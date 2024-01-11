@@ -3,7 +3,7 @@ import 'package:flutter_task/home/home.dart';
 import 'package:flutter_task/budget/budget_screen.dart';
 import 'package:flutter_task/onb/photo_screen.dart';
 import 'package:flutter_task/settings/settings_screen.dart';
-
+import 'package:flutter_task/user_data_provider.dart';
 
 class MyTabs extends StatefulWidget {
   @override
@@ -21,6 +21,7 @@ class _MyTabsState extends State<MyTabs> {
     'assets/tab4.png'
   ];
   final String _backgroundImage = 'assets/bg.jpg';
+  final UserDataProvider userDataProvider = UserDataProvider();
 
   @override
   Widget build(BuildContext context) {
@@ -118,7 +119,7 @@ class _MyTabsState extends State<MyTabs> {
       case 2:
         return ThreePhotosScreen();
       case 3:
-        return SettingsScreen();
+        return SettingsScreen(userDataProvider);
       default:
         return Container(
           decoration: BoxDecoration(

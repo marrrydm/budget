@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_task/home/user_photo_cache.dart';
+import 'package:flutter_task/user_data_provider.dart';
+import 'package:provider/provider.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 
@@ -122,166 +124,177 @@ class HomeScreenBody extends StatelessWidget {
 }
 
 class UserInfoWidget extends StatelessWidget {
+  final UserDataProvider _userDataProvider = UserDataProvider();
+
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(top: 15),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.start,
-        children: [UserInfoDetailsWidget()],
+        children: [UserInfoDetailsWidget(_userDataProvider)],
       ),
     );
   }
 }
 
-class UserInfoDetailsWidget extends StatefulWidget {
-  @override
-  _UserInfoDetailsWidgetState createState() => _UserInfoDetailsWidgetState();
-}
-
-class _UserInfoDetailsWidgetState extends State<UserInfoDetailsWidget> {
+class ImagePickerHandler {
   final ImagePicker _picker = ImagePicker();
   bool _isPicking = false;
-  File? _userPhoto;
-  String? _userName;
 
-  @override
-  void initState() {
-    _loadUserData();
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
-  @override
-  void didChangeDependencies() {
-    _loadUserData();
-    super.didChangeDependencies();
-  }
-
-  Future<void> _saveChanges() async {
-    try {
-      final userPhotoToSave = _userPhoto ?? File('assets/per2.png');
-
-      if (mounted) {
-        setState(() {
-          _userPhoto = userPhotoToSave;
-        });
-      }
-
-      await PhotoStorage.deleteUserPhoto();
-      await PhotoStorage.saveUserPhoto(userPhotoToSave);
-    } catch (e) {
-      print('Error saving user photo: $e');
-    }
-  }
-
-  Future<void> _loadUserData() async {
-    final loadedPhoto = await PhotoStorage.loadUserPhoto();
-    final loadedName = await UserNameCache.loadUserName();
-
-    if (mounted) {
-      setState(() {
-        _userPhoto = loadedPhoto;
-        _userName = loadedName ?? '';
-      });
-    }
-  }
-
-  Future<void> _pickUserPhoto(ImageSource source) async {
+  Future<void> pickUserPhoto(
+      UserDataProvider userDataProvider, ImageSource source) async {
     if (_isPicking) {
       return;
     }
 
     try {
-      if (mounted) {
-        setState(() {
-          _isPicking = false;
-        });
+      _isPicking = true;
+
+      XFile? pickedFile;
+      if (source == ImageSource.camera) {
+        pickedFile = await _picker.pickImage(
+          source: source,
+          maxHeight: 800,
+          maxWidth: 800,
+        );
+      } else {
+        pickedFile = await _picker.pickImage(source: source);
       }
 
-      final pickedFile = await _picker.pickImage(source: source);
       if (pickedFile != null) {
         final pickedImage = File(pickedFile.path);
-        await PhotoStorage.saveUserPhoto(pickedImage);
-        _onUserPhotoChanged(pickedImage);
+        await userDataProvider.updateUserPhoto(pickedImage);
       }
     } catch (e, stackTrace) {
       print('Error picking image: $e\n$stackTrace');
     } finally {
-      if (mounted) {
-        setState(() {
-          _isPicking = false;
-        });
-      }
+      _isPicking = false;
     }
   }
+}
 
-  Future<void> _onUserPhotoChanged(File? newPhoto) async {
-    if (_userPhoto != null) {
-      await PhotoStorage.deleteUserPhoto();
-    }
-    setState(() {
-      _userPhoto = newPhoto;
-    });
-    _saveChanges();
+class UserInfoDetailsWidget extends StatefulWidget {
+  final UserDataProvider userDataProvider;
+  UserInfoDetailsWidget(this.userDataProvider);
+
+  @override
+  _UserInfoDetailsWidgetState createState() => _UserInfoDetailsWidgetState();
+}
+
+class _UserInfoDetailsWidgetState extends State<UserInfoDetailsWidget> {
+  final ImagePickerHandler _imagePickerHandler = ImagePickerHandler();
+  final UserDataProvider _userDataProvider = UserDataProvider();
+
+  @override
+  void initState() {
+    super.initState();
+    _initData();
+  }
+
+  Future<void> _initData() async {
+    await _userDataProvider.loadUserData();
+  }
+
+  @override
+  void didChangeDependencies() {
+    final userNameToSave =
+        UserData().userName?.isNotEmpty == true ? UserData().userName! : 'Name';
+    UserNameCache.saveUserName(userNameToSave);
+    _userDataProvider.loadUserData();
+    super.didChangeDependencies();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          margin: EdgeInsets.only(left: 15),
-          child: GestureDetector(
-            onTap: () => _showImagePickerDialog(context),
-            child: CircleAvatar(
-              radius: 25,
-              backgroundImage:
-                  _userPhoto != null ? FileImage(_userPhoto!) : null,
-              child: _userPhoto == null ? Icon(Icons.camera_alt) : null,
-            ),
-          ),
-        ),
-        SizedBox(width: 20),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            SizedBox(
-              child: Text(
-                'Hi, ${_userName?.isNotEmpty == true ? _userName! : 'Name'}!',
-                style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 24,
-                  fontFamily: 'SrbijaSans',
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-            ),
-            SizedBox(height: 7),
-            SizedBox(
-              child: Text(
-                'hjkdjbdhdhjsk@gmail.com',
-                style: TextStyle(
-                  color: Colors.black.withOpacity(0.7),
-                  fontSize: 16,
-                  fontFamily: 'SrbijaSans',
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
+    final userDataProvider = UserDataProvider();
+    userDataProvider.loadUserData();
+
+    return ChangeNotifierProvider(
+      create: (context) => userDataProvider,
+      child: Consumer<UserDataProvider>(
+        builder: (context, userDataProvider, _) {
+          return UserInfoDetailsWidgetContent(
+              userDataProvider, _imagePickerHandler);
+        },
+      ),
     );
   }
+}
+
+class UserInfoDetailsWidgetContent extends StatelessWidget {
+  final UserDataProvider userDataProvider;
+  final ImagePickerHandler imagePickerHandler;
+
+  UserInfoDetailsWidgetContent(this.userDataProvider, this.imagePickerHandler);
+
+  @override
+Widget build(BuildContext context) {
+  final userData = userDataProvider.userData;
+
+  return FutureBuilder<String?>(
+    future: UserNameCache.loadUserName(),
+    builder: (context, snapshot) {
+      final loadedName = snapshot.data;
+
+      return Row(
+        children: [
+          Container(
+            margin: EdgeInsets.only(left: 15),
+            child: GestureDetector(
+              onTap: () => _showImagePickerDialog(context),
+              child: CircleAvatar(
+                radius: 25,
+                backgroundImage: userData.userPhoto != null
+                    ? FileImage(userData.userPhoto!)
+                    : null,
+                child: userData.userPhoto == null
+                    ? Icon(Icons.camera_alt)
+                    : null,
+              ),
+            ),
+          ),
+          SizedBox(width: 20),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              SizedBox(
+                child: Text(
+                  'Hi, ${loadedName ?? 'Name'}!',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 24,
+                    fontFamily: 'SrbijaSans',
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ),
+              SizedBox(height: 7),
+              SizedBox(
+                child: Text(
+                  'hjkdjbdhdhjsk@gmail.com',
+                  style: TextStyle(
+                    color: Colors.black.withOpacity(0.7),
+                    fontSize: 16,
+                    fontFamily: 'SrbijaSans',
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+    },
+  );
+}
+
 
   Future<void> _showImagePickerDialog(BuildContext context) async {
+    imageCache?.clear();
+
     await showDialog(
       context: context,
       builder: (context) {
@@ -294,24 +307,16 @@ class _UserInfoDetailsWidgetState extends State<UserInfoDetailsWidget> {
                 title: Text('Gallery'),
                 onTap: () async {
                   Navigator.of(context).pop();
-                  final pickedFile = await ImagePicker()
-                      .pickImage(source: ImageSource.gallery);
-                  if (pickedFile != null) {
-                    _onUserPhotoChanged(File(pickedFile.path));
-                    _pickUserPhoto(ImageSource.gallery);
-                  }
+                  imagePickerHandler.pickUserPhoto(
+                      userDataProvider, ImageSource.gallery);
                 },
               ),
               ListTile(
                 title: Text('Camera'),
                 onTap: () async {
                   Navigator.of(context).pop();
-                  final pickedFile =
-                      await ImagePicker().pickImage(source: ImageSource.camera);
-                  if (pickedFile != null) {
-                    _onUserPhotoChanged(File(pickedFile.path));
-                    _pickUserPhoto(ImageSource.camera);
-                  }
+                  imagePickerHandler.pickUserPhoto(
+                      userDataProvider, ImageSource.camera);
                 },
               ),
             ],
