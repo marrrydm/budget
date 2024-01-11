@@ -19,7 +19,7 @@ class PhotoStorage {
     } catch (e) {
       print('Error getting user photo: $e');
     }
-    return File('assets/default_photo.png'); // Return a default photo or null
+    return File('assets/default_photo.png');
   }
 
   static Future<void> deleteUserPhoto() async {
@@ -58,7 +58,7 @@ class PhotoStorage {
     } catch (e) {
       print('Error loading user photo: $e');
     }
-    return null; // Return null or a default photo
+    return null; 
   }
 }
 

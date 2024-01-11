@@ -152,6 +152,11 @@ class _UserInfoDetailsWidgetState extends State<UserInfoDetailsWidget> {
   }
 
   @override
+  void dispose() {
+    super.dispose();
+  }
+
+  @override
   void didChangeDependencies() {
     _loadUserData();
     super.didChangeDependencies();
@@ -192,9 +197,11 @@ class _UserInfoDetailsWidgetState extends State<UserInfoDetailsWidget> {
     }
 
     try {
-      setState(() {
-        _isPicking = true;
-      });
+      if (mounted) {
+        setState(() {
+          _isPicking = false;
+        });
+      }
 
       final pickedFile = await _picker.pickImage(source: source);
       if (pickedFile != null) {
@@ -205,7 +212,11 @@ class _UserInfoDetailsWidgetState extends State<UserInfoDetailsWidget> {
     } catch (e, stackTrace) {
       print('Error picking image: $e\n$stackTrace');
     } finally {
-      _isPicking = false;
+      if (mounted) {
+        setState(() {
+          _isPicking = false;
+        });
+      }
     }
   }
 

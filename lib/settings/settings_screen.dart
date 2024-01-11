@@ -24,7 +24,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   void dispose() {
-    _saveChanges();
     super.dispose();
   }
 
@@ -77,27 +76,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _pickUserPhoto(ImageSource source) async {
-    if (_isPicking) {
-      return;
-    }
-
-    try {
-      setState(() {
-        _isPicking = true;
-      });
-
-      final pickedFile = await _picker.pickImage(source: source);
-      if (pickedFile != null) {
-        final pickedImage = File(pickedFile.path);
-        await PhotoStorage.saveUserPhoto(pickedImage);
-        _onUserPhotoChanged(pickedImage);
-      }
-    } catch (e, stackTrace) {
-      print('Error picking image: $e\n$stackTrace');
-    } finally {
-        _isPicking = false;
-    }
+  if (_isPicking) {
+    return;
   }
+
+  try {
+    if (mounted) {
+    setState(() {
+      _isPicking = false;
+    });
+  }
+
+    final pickedFile = await _picker.pickImage(source: source);
+    if (pickedFile != null) {
+      final pickedImage = File(pickedFile.path);
+      await PhotoStorage.saveUserPhoto(pickedImage);
+      _onUserPhotoChanged(pickedImage);
+    }
+  } catch (e, stackTrace) {
+    print('Error picking image: $e\n$stackTrace');
+  } finally {
+    if (mounted) {
+    setState(() {
+      _isPicking = false;
+    });
+  }
+  }
+}
 
   Future<void> _showImagePickerDialog(BuildContext context) async {
     await showDialog(
